@@ -34,6 +34,10 @@ func TestProposer_Propose(t *testing.T) {
 		ok ,bs = p1.Propose([]byte("abc"))
 		So(ok, ShouldBeFalse)
 
+		ok ,bs = p1.Propose([]byte("abcd"))
+		So(ok, ShouldBeTrue)
+		So(string(bs), ShouldEqual, "abc")
+
 	})
 
 	Convey("parallel", t, func() {
