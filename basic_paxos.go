@@ -195,10 +195,7 @@ func (p *Proposer) Propose(value []byte) (bool, []byte) {
 	ac := 0
 	for i := 0; i < total; i++ {
 		packet := <-rpc
-		prm, ok := packet.msg.(*AcceptRespMessage)
-		if !ok {
-			continue
-		}
+		prm, _ := packet.msg.(*AcceptRespMessage)
 		log.Printf("accept2 id:%d number:%d, prm.min:%d", p.id, p.curNumber, prm.MinProposal)
 		if prm.MinProposal > p.curNumber {
 			return false, nil
