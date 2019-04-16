@@ -17,9 +17,9 @@ func Test_LocalServer(t *testing.T) {
 				select {
 				case p := <-recv:
 					p.msg.(*AcceptMessage).N++
-					p.c.Send(p)
 					st++
 					t.Logf("n:%d", p.msg.(*AcceptMessage).N)
+					p.c.Send(p)
 				}
 			}
 		}()
@@ -54,9 +54,9 @@ func Test_LocalServer2(t *testing.T) {
 				select {
 				case p := <-recv:
 					p.msg.(*AcceptMessage).N++
-					p.c.Send(p)
 					st++
 					t.Logf("n:%d", p.msg.(*AcceptMessage).N)
+					p.c.Send(p)
 				}
 			}
 		}()

@@ -142,7 +142,8 @@ func (p *Proposer) Propose(value []byte) (bool, []byte) {
 	defer p.proposeMutex.Unlock()
 	// prepare 1
 	p.genNumber()
-	msg := &PrepareMessage{N: p.curNumber}
+	curNumber := p.curNumber
+	msg := &PrepareMessage{N: curNumber}
 	total := len(p.AcceptorClients)
 	pc := make(chan *Packet, total)
 	maj := int(math.Ceil(float64(total) / 2))
@@ -150,7 +151,7 @@ func (p *Proposer) Propose(value []byte) (bool, []byte) {
 	for i := 0; i < total; i++ {
 		go func(i int) {
 			<-p.receiveChans[i]
-			log.Printf("prepare1 id:%d number:%d", p.id, p.curNumber)
+			log.Printf("prepare1 id:%d number:%d", p.id, curNumber)
 			p.AcceptorClients[i].Send(&Packet{msg: msg})
 			packet, _ := p.AcceptorClients[i].Receive()
 			p.receiveChans[i] <- 1
@@ -164,7 +165,7 @@ func (p *Proposer) Propose(value []byte) (bool, []byte) {
 	for i := 0; i < total; i++ {
 		packet := <-pc
 		prm := packet.msg.(*PrepareRespMessage)
-		log.Printf("prepare2 id:%d number:%d prm.aP:%d prm.av:%v", p.id, p.curNumber, prm.AcceptedProposal, prm.AcceptedValue)
+		log.Printf("prepare2 id:%d number:%d prm.aP:%d prm.av:%v", p.id, curNumber, prm.AcceptedProposal, prm.AcceptedValue)
 		if prm.AcceptedValue != nil && prm.AcceptedProposal > acceptedProposal {
 			acceptedValue = prm.AcceptedValue
 			acceptedProposal = prm.AcceptedProposal
@@ -176,13 +177,13 @@ func (p *Proposer) Propose(value []byte) (bool, []byte) {
 	}
 
 	// accept
-	amsg := &AcceptMessage{N: p.curNumber, value: acceptedValue}
+	amsg := &AcceptMessage{N: curNumber, value: acceptedValue}
 	rpc := make(chan *Packet, total)
 	for i := 0; i < total; i++ {
 		go func(i int) {
 			<-p.receiveChans[i]
 
-			log.Printf("accept1 id:%d number:%d, value:%v", p.id, p.curNumber, acceptedValue)
+			log.Printf("accept1 id:%d number:%d, value:%v", p.id, curNumber, acceptedValue)
 			p.AcceptorClients[i].Send(&Packet{msg: amsg})
 			packet, _ := p.AcceptorClients[i].Receive()
 
@@ -196,8 +197,8 @@ func (p *Proposer) Propose(value []byte) (bool, []byte) {
 	for i := 0; i < total; i++ {
 		packet := <-rpc
 		prm, _ := packet.msg.(*AcceptRespMessage)
-		log.Printf("accept2 id:%d number:%d, prm.min:%d", p.id, p.curNumber, prm.MinProposal)
-		if prm.MinProposal > p.curNumber {
+		log.Printf("accept2 id:%d number:%d, prm.min:%d", p.id, curNumber, prm.MinProposal)
+		if prm.MinProposal > curNumber {
 			return false, nil
 		}
 		ac++
